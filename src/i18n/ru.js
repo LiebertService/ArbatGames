@@ -22,6 +22,7 @@ export default {
     error: 'Не удалось загрузить данные drova.io: {error}',
     loadingCatalog: 'Загружаем каталог игр…',
     searchInLibrary: 'Поиск по библиотеке',
+    theme: { foxexeDark: 'Тёмная', dvLight: 'Светлая' },
     hw: { cpu: 'Процессор', gpu: 'Видеокарта', ram: 'ОЗУ' },
   },
 };

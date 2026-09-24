@@ -22,7 +22,16 @@
 - фильтры по статусу, видеокарте и **игре** («на каких станциях есть Cyberpunk»);
 - окно станции: описание мерчанта (HTML очищается, остаются только абзацы, жирный текст и http(s)-ссылки) и полная библиотека игр с поиском;
 - кнопка «Играть» ведёт на `https://drova.io/stations/{uuid}`;
-- автообновление статусов раз в минуту, только пока вкладка видна.
+- автообновление статусов раз в минуту, только пока вкладка видна;
+- темы drova.io: `foxexeDark` (тёмная, по умолчанию) и `dvLight` (светлая), см. ниже.
+
+## Темы
+
+Как на drova.io: корневой layout получает класс `app-layout theme_<тема>`, а компоненты содержат базовые (светлые)
+стили и переопределения под `.theme_foxexeDark`. Цвета сняты с `index.min.css` drova.io: гексагональный фон,
+панели `rgba(0,0,0,.85)`, фильтры `#333`, рамка станции 5px `#0c6` (свободна) или `#f90` (занята), модальные окна `#1e1e1e`.
+Выбор хранится в cookie `drova_theme`, как на drova.io. Внутри drova.io класс темы и переключатель уже есть,
+поэтому модуль `src/store/theme.js` и `ThemeSwitcher.vue` там не нужны.
 
 ## Данные: только публичный API, без токенов
 
@@ -48,7 +57,7 @@ npm test        # юнит-тесты src/utils (node --test)
 
 ## Встраивание в drova.io
 
-1. Скопировать `src/api/drova.js`, `src/utils/`, `src/store/merchantStations.js`, `src/components/`, `src/views/MerchantStations.vue`.
+1. Скопировать `src/api/drova.js`, `src/utils/`, `src/store/merchantStations.js`, `src/components/` (кроме `ThemeSwitcher.vue`), `src/views/MerchantStations.vue` (убрать из шаблона `<ThemeSwitcher />`).
 2. Зарегистрировать Vuex-модуль: `store.registerModule('merchantStations', merchantStations)` (или в `modules`).
 3. Добавить маршрут из `merchantRoutes` (`src/router.js`) в роутер drova.io.
 4. Слить `src/i18n/ru.js` и `en.js` в сообщения vue-i18n (ключ `merchantStations`).

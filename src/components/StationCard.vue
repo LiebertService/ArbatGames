@@ -21,14 +21,14 @@
       <div class="station-card__meta">
         <span><Icon type="md-game-controller-b" /> {{ $t('merchantStations.games', { n: station.productList.length }) }}</span>
         <span v-if="station.city"><Icon type="md-pin" /> {{ station.city }}</span>
-        <Tag v-if="station.freeTrial" color="cyan">{{ $t('merchantStations.freeTrial') }}</Tag>
+        <Tag v-if="station.freeTrial" color="cyan" class="station-card__trial">{{ $t('merchantStations.freeTrial') }}</Tag>
       </div>
 
       <div class="station-card__actions">
-        <Button type="primary" :to="playUrl" target="_blank" :disabled="station.state !== 'free'">
+        <Button type="primary" class="station-card__play" :to="playUrl" target="_blank" :disabled="station.state !== 'free'">
           {{ $t('merchantStations.play') }}
         </Button>
-        <Button @click="$emit('details', station)">{{ $t('merchantStations.details') }}</Button>
+        <Button class="station-card__more" @click="$emit('details', station)">{{ $t('merchantStations.details') }}</Button>
       </div>
     </div>
   </Card>
@@ -104,4 +104,50 @@ export default {
   margin-bottom: 12px;
 }
 .station-card__actions { display: flex; gap: 8px; }
+
+/* ===== theme_foxexeDark: карточка как .station на drova.io/stations ===== */
+.theme_foxexeDark .station-card {
+  --state: #0c6;
+  color: #fff;
+  background: #000;
+  border: 5px solid var(--state);
+  border-radius: 0;
+  transition: background-color 0.2s;
+}
+.theme_foxexeDark .station-card_busy { --state: #f90; }
+.theme_foxexeDark .station-card_other { --state: #c3cbd6; }
+.theme_foxexeDark .station-card:hover { background-color: #222d38; }
+.theme_foxexeDark .station-card__state,
+.theme_foxexeDark .station-card__trial {
+  background: var(--state) !important;
+  border-color: var(--state) !important;
+  border-radius: 3px;
+  font-weight: 600;
+}
+.theme_foxexeDark .station-card__trial { --state: #0c6; }
+.theme_foxexeDark .station-card__trial >>> .ivu-tag-text { color: #fff !important; } /* iView: .ivu-tag-cyan .ivu-tag-text !important */
+.theme_foxexeDark .station-card__title { color: var(--state); }
+.theme_foxexeDark .station-card__hw { color: #ddd; }
+.theme_foxexeDark .station-card__game { color: #fff; }
+.theme_foxexeDark .station-card__meta { color: #ccc; }
+.theme_foxexeDark .station-card__play:not([disabled]) {
+  color: #fff;
+  background: #0c6;
+  border-color: #0c6;
+}
+.theme_foxexeDark .station-card__play:not([disabled]):hover {
+  background: rgba(0, 210, 75, 0.85);
+  border-color: rgba(0, 210, 75, 0.85);
+}
+.theme_foxexeDark .station-card__play[disabled] {
+  color: #777;
+  background: #333;
+  border-color: #333;
+}
+.theme_foxexeDark .station-card__more {
+  color: #fff;
+  background: #434856;
+  border-color: #434856;
+}
+.theme_foxexeDark .station-card__more:hover { background: #565c6c; border-color: #565c6c; }
 </style>

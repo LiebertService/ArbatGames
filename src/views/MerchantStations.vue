@@ -14,6 +14,7 @@
       <div class="merchant-stations__refresh">
         <span v-if="updatedAt">{{ $t('merchantStations.updated', { time: updatedTime }) }}</span>
         <Button icon="md-refresh" :loading="loading" @click="refresh">{{ $t('merchantStations.refresh') }}</Button>
+        <ThemeSwitcher />
       </div>
     </header>
 
@@ -42,16 +43,18 @@
     <p v-else-if="!stations.length && !error" class="merchant-stations__empty">{{ $t('merchantStations.noStations') }}</p>
     <p v-else-if="!filtered.length" class="merchant-stations__empty">{{ $t('merchantStations.empty') }}</p>
 
-    <Row :gutter="16" type="flex">
-      <Col v-for="station in filtered" :key="station.uuid" :xs="24" :sm="12" :md="8" :lg="6" class="merchant-stations__col">
-        <StationCard
-          :station="station"
-          :hardware="hardware[station.uuid]"
-          :product="products[station.productId]"
-          @details="selected = $event"
-        />
-      </Col>
-    </Row>
+    <div v-if="filtered.length" class="merchant-stations__content">
+      <Row :gutter="16" type="flex">
+        <Col v-for="station in filtered" :key="station.uuid" :xs="24" :sm="12" :md="8" :lg="6" class="merchant-stations__col">
+          <StationCard
+            :station="station"
+            :hardware="hardware[station.uuid]"
+            :product="products[station.productId]"
+            @details="selected = $event"
+          />
+        </Col>
+      </Row>
+    </div>
 
     <StationDetailsModal
       :station="selected"
@@ -65,13 +68,14 @@
 import { mapState, mapGetters } from 'vuex';
 import StationCard from '@/components/StationCard.vue';
 import StationDetailsModal from '@/components/StationDetailsModal.vue';
+import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 import { MERCHANTS, REFRESH_INTERVAL } from '@/config';
 
 const NS = 'merchantStations';
 
 export default {
   name: 'MerchantStations',
-  components: { StationCard, StationDetailsModal },
+  components: { StationCard, StationDetailsModal, ThemeSwitcher },
   props: {
     merchantId: { type: String, required: true },
   },
@@ -167,7 +171,7 @@ export default {
 .merchant-stations__title { margin: 0; font-size: 28px; font-weight: 700; color: #464c5b; }
 .merchant-stations__summary { margin: 4px 0 0; }
 .merchant-stations__links { margin: 4px 0 0; display: flex; gap: 12px; }
-.merchant-stations__refresh { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+.merchant-stations__refresh { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 13px; }
 .merchant-stations__filters {
   display: flex;
   flex-wrap: wrap;
@@ -179,4 +183,21 @@ export default {
 .merchant-stations__col { margin-bottom: 16px; }
 .merchant-stations__spin { margin: 60px auto; }
 .merchant-stations__empty { margin: 40px 0; text-align: center; }
+
+/* ===== theme_foxexeDark: панели как у /stations на drova.io ===== */
+.theme_foxexeDark .merchant-stations__title { color: #fff; }
+.theme_foxexeDark .merchant-stations__summary,
+.theme_foxexeDark .merchant-stations__refresh,
+.theme_foxexeDark .merchant-stations__empty { color: #ccc; }
+.theme_foxexeDark .merchant-stations__links a { color: #007bff; }
+.theme_foxexeDark .merchant-stations__filters {
+  padding: 5px;
+  background: #333;
+  border-radius: 5px;
+}
+.theme_foxexeDark .merchant-stations__content {
+  padding: 8px 8px 0;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 5px;
+}
 </style>

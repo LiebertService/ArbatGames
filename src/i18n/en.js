@@ -22,6 +22,7 @@ export default {
     error: 'Failed to load drova.io data: {error}',
     loadingCatalog: 'Loading game catalog…',
     searchInLibrary: 'Search the library',
+    theme: { foxexeDark: 'Dark', dvLight: 'Light' },
     hw: { cpu: 'CPU', gpu: 'GPU', ram: 'RAM' },
   },
 };

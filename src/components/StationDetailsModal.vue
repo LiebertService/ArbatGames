@@ -1,5 +1,14 @@
 <template>
-  <Modal :value="!!station" :title="station ? station.title : ''" width="720" footer-hide @on-visible-change="onVisible">
+  <!-- transfer=false: окно остаётся внутри .theme_* и получает стили темы -->
+  <Modal
+    :value="!!station"
+    :title="station ? station.title : ''"
+    :transfer="false"
+    class-name="station-details"
+    width="720"
+    footer-hide
+    @on-visible-change="onVisible"
+  >
     <template v-if="station">
       <dl v-if="hardware" class="details__hw">
         <template v-if="hardware.gpu"><dt>{{ $t('merchantStations.hw.gpu') }}</dt><dd>{{ hardware.gpu }} {{ hardware.gpuRam }}</dd></template>
@@ -86,4 +95,24 @@ export default {
 }
 .details__games li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .details__games img { width: 64px; height: 30px; object-fit: cover; border-radius: 3px; background: #e3e8ee; flex: none; }
+
+.theme_foxexeDark .details__hw dt,
+.theme_foxexeDark .details__heading { color: #fff; }
+.theme_foxexeDark .details__hw dd,
+.theme_foxexeDark .details__description,
+.theme_foxexeDark .details__games li { color: #ddd; }
+.theme_foxexeDark .details__description >>> a { color: #007bff; }
+.theme_foxexeDark .details__games img { background: #1e1e1e; }
+</style>
+
+<style>
+/* Корень окна iView рендерит сам — стили без scoped. theme_foxexeDark: .modal на drova.io */
+.theme_foxexeDark .station-details .ivu-modal-content {
+  color: #fff;
+  background: #1e1e1e;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+}
+.theme_foxexeDark .station-details .ivu-modal-header { border-bottom-color: #333; }
+.theme_foxexeDark .station-details .ivu-modal-header-inner { color: #fff; }
+.theme_foxexeDark .station-details .ivu-modal-close .ivu-icon-ios-close { color: #ccc; }
 </style>
