@@ -17,3 +17,8 @@ export const MERCHANTS = {
 
 // Как часто обновлять статусы станций (мс). Ответ public/web ~1 МБ, чаще не нужно.
 export const REFRESH_INTERVAL = 60 * 1000;
+
+// Витрина мерчанта с дефолтами для неизвестного user_id.
+export function merchantInfo(merchantId) {
+  return { name: 'мерчанта', city: null, links: [], ...MERCHANTS[merchantId] };
+}

@@ -13,6 +13,12 @@ export const merchantRoutes = [
     props: true,
   },
   {
+    path: '/merchants/:merchantId/games',
+    name: 'merchant-games',
+    component: () => import(/* webpackChunkName: "merchant-stations" */ '@/views/GamesPage.vue'),
+    props: true,
+  },
+  {
     path: '/merchants/:merchantId/stations/:stationId',
     name: 'merchant-station',
     component: () => import(/* webpackChunkName: "merchant-stations" */ '@/views/StationPage.vue'),

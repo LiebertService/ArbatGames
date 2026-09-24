@@ -1,19 +1,6 @@
 <template>
   <div class="merchant-stations">
-    <header class="merchant-stations__header">
-      <div>
-        <h1 class="merchant-stations__title">{{ $t('merchantStations.title', { name: merchant.name }) }}</h1>
-        <p v-if="merchant.city" class="merchant-stations__summary">{{ merchant.city }}</p>
-        <p v-if="merchant.links.length" class="merchant-stations__links">
-          <a v-for="link in merchant.links" :key="link.url" :href="link.url" target="_blank" rel="noopener">{{ link.title }}</a>
-        </p>
-      </div>
-      <div class="merchant-stations__refresh">
-        <span v-if="updatedAt">{{ $t('merchantStations.updated', { time: updatedTime }) }}</span>
-        <Button icon="md-refresh" :loading="loading" @click="refresh">{{ $t('merchantStations.refresh') }}</Button>
-        <ThemeSwitcher />
-      </div>
-    </header>
+    <MerchantHeader :merchant-id="merchantId" />
 
     <div class="merchant-stations__filters">
       <!-- Статус — в адресе (?status=all|busy, без параметра — свободные): кнопки = обычные ссылки -->
@@ -70,8 +57,8 @@
 <script>
 import { mapState, mapGetters } from 'vuex';
 import StationCard from '@/components/StationCard.vue';
-import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
-import { MERCHANTS, REFRESH_INTERVAL } from '@/config';
+import MerchantHeader from '@/components/MerchantHeader.vue';
+import { merchantInfo, REFRESH_INTERVAL } from '@/config';
 
 const NS = 'merchantStations';
 const STATUSES = ['free', 'all', 'busy'];
@@ -79,7 +66,7 @@ const DEFAULT_STATUS = 'free';
 
 export default {
   name: 'MerchantStations',
-  components: { StationCard, ThemeSwitcher },
+  components: { StationCard, MerchantHeader },
   props: {
     merchantId: { type: String, required: true },
   },
@@ -99,18 +86,13 @@ export default {
     };
   },
   computed: {
-    ...mapState(NS, ['stations', 'hardware', 'products', 'catalog', 'loading', 'error', 'updatedAt']),
+    ...mapState(NS, ['stations', 'hardware', 'products', 'catalog', 'loading', 'error']),
     ...mapGetters(NS, ['counts', 'gpus']),
     stateFilter() {
       const { status } = this.$route.query;
       return STATUSES.includes(status) ? status : DEFAULT_STATUS;
     },
-    merchant() {
-      return { name: 'мерчанта', city: null, links: [], ...MERCHANTS[this.merchantId] };
-    },
-    updatedTime() {
-      return new Date(this.updatedAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    },
+    merchant() { return merchantInfo(this.merchantId); },
     // productId игр, чьё название совпало с поиском; null — фильтр не активен.
     matchedProducts() {
       const q = this.gameQuery.trim().toLowerCase();
@@ -171,18 +153,6 @@ export default {
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
-.merchant-stations__header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.merchant-stations__title { margin: 0; font-size: 28px; font-weight: 700; color: #464c5b; }
-.merchant-stations__summary { margin: 4px 0 0; }
-.merchant-stations__links { margin: 4px 0 0; display: flex; gap: 12px; }
-.merchant-stations__refresh { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 13px; }
 .merchant-stations__filters {
   display: flex;
   flex-wrap: wrap;
@@ -196,11 +166,7 @@ export default {
 .merchant-stations__empty { margin: 40px 0; text-align: center; }
 
 /* ===== theme_foxexeDark: панели как у /stations на drova.io ===== */
-.theme_foxexeDark .merchant-stations__title { color: #fff; }
-.theme_foxexeDark .merchant-stations__summary,
-.theme_foxexeDark .merchant-stations__refresh,
 .theme_foxexeDark .merchant-stations__empty { color: #ccc; }
-.theme_foxexeDark .merchant-stations__links a { color: #007bff; }
 .theme_foxexeDark .merchant-stations__filters {
   padding: 5px;
   background: #333;

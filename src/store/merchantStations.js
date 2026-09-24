@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import * as api from '@/api/drova';
-import { merchantStations, summarizeHardware, STATE_FREE, STATE_BUSY } from '@/utils/station';
+import {
+  merchantStations, merchantGames, summarizeHardware, STATE_FREE, STATE_BUSY,
+} from '@/utils/station';
 
 // Vuex-модуль (namespaced) — подключается в стор drova.io как `merchantStations`.
 export default {
@@ -13,6 +15,7 @@ export default {
     products: {}, // productId -> { title, cardPicture }
     catalog: null, // полный каталог, грузится по требованию
     catalogLoading: false,
+    popular: [], // productId по популярности на drova.io
     loading: false,
     error: null,
     updatedAt: null,
@@ -25,8 +28,8 @@ export default {
       busy: state.stations.filter((s) => s.state === STATE_BUSY).length,
     }),
     gpus: (state) => [...new Set(Object.values(state.hardware).map((h) => h && h.gpu).filter(Boolean))].sort(),
-    // Уникальные игры, установленные хотя бы на одной станции мерчанта.
-    merchantProductIds: (state) => [...new Set(state.stations.flatMap((s) => s.productList))],
+    // Игры мерчанта (как drova.io/games): только с его станций, популярные первыми.
+    games: (state) => merchantGames(state.stations, state.catalog, state.popular),
   },
 
   mutations: {
@@ -48,6 +51,7 @@ export default {
     setProduct(state, { productId, product }) { Vue.set(state.products, productId, product); },
     setCatalog(state, catalog) { state.catalog = catalog; },
     setCatalogLoading(state, v) { state.catalogLoading = v; },
+    setPopular(state, ids) { state.popular = Object.freeze(ids); },
   },
 
   actions: {
@@ -86,6 +90,15 @@ export default {
         .catch(() => commit('setProduct', { productId, product: null }))));
     },
 
+    async loadPopular({ state, commit }) {
+      if (state.popular.length) return;
+      try {
+        commit('setPopular', await api.fetchPopularGames());
+      } catch (e) {
+        // не критично: без популярности сортируем по алфавиту
+      }
+    },
+
     async loadCatalog({ state, commit }) {
       if (state.catalog || state.catalogLoading) return;
       commit('setCatalogLoading', true);
@@ -100,6 +113,14 @@ export default {
             requiredAccount: p.requiredAccount || null,
             licenseType: p.licenseType || null,
             useDefaultDesktop: !!p.useDefaultDesktop,
+            // для страницы игры
+            pagePicture: p.pagePicture || null,
+            descriptionRu: p.descriptionRu || null,
+            descriptionEn: p.descriptionEn || null,
+            publisher: p.publisher || null,
+            developer: p.developer || null,
+            metacriticScore: p.metacriticScore || null,
+            inShopUrl: p.inShopUrl || null,
           };
         });
         commit('setCatalog', Object.freeze(map));

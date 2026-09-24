@@ -22,3 +22,8 @@ export function fetchProduct(productId) {
 export function fetchCatalog() {
   return http.get('/product-manager/product/listfull2').then((r) => r.data);
 }
+
+// Самые популярные игры drova.io за неделю: упорядоченный массив productId (no-auth).
+export function fetchPopularGames() {
+  return http.get('/accounting/statistics/most_popular_games').then((r) => r.data);
+}

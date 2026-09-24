@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   stationNumber, stationTitle, stationState, summarizeHardware, merchantStations, sanitizeDescription,
+  merchantGames, pickFreeStation,
 } from '../src/utils/station.js';
 
 test('stationNumber: ведущий номер ARBAT и хвостовой номер FragPlay', () => {
@@ -64,4 +65,28 @@ test('sanitizeDescription декодирует числовые сущности
   assert.equal(sanitizeDescription('&#x1f9ff; Акция &#128293;'), '🧿 Акция 🔥');
   assert.equal(sanitizeDescription('&#60;script&#62;x'), '&lt;script&gt;x');
   assert.equal(sanitizeDescription('&unknown; &#0;'), '&amp;unknown; &amp;#0;');
+});
+
+test('merchantGames: только игры наших станций, популярные первыми, счётчики станций', () => {
+  const stations = [
+    { uuid: 's1', number: 1, title: '1', state: 'free', productList: ['a', 'b'] },
+    { uuid: 's2', number: 2, title: '2', state: 'busy', productList: ['b', 'c', 'x'] },
+  ];
+  const catalog = { a: { title: 'Alpha' }, b: { title: 'Beta' }, c: { title: 'Cyber' }, z: { title: 'Zeta' } };
+  const games = merchantGames(stations, catalog, ['c', 'z', 'b']);
+  assert.deepEqual(games.map((g) => g.productId), ['c', 'b', 'a']); // x нет в каталоге, z нет на станциях
+  assert.deepEqual(games.find((g) => g.productId === 'b').stationIds, ['s1', 's2']);
+  assert.equal(games.find((g) => g.productId === 'b').freeCount, 1);
+  assert.equal(games.find((g) => g.productId === 'c').freeCount, 0);
+});
+
+test('pickFreeStation: свободная станция с игрой и наименьшим номером', () => {
+  const stations = [
+    { uuid: 's9', number: 9, title: '9', state: 'free', productList: ['a'] },
+    { uuid: 's3', number: 3, title: '3', state: 'busy', productList: ['a'] },
+    { uuid: 's5', number: 5, title: '5', state: 'free', productList: ['a'] },
+    { uuid: 's1', number: 1, title: '1', state: 'free', productList: ['b'] },
+  ];
+  assert.equal(pickFreeStation(stations, 'a').uuid, 's5');
+  assert.equal(pickFreeStation(stations, 'nope'), null);
 });

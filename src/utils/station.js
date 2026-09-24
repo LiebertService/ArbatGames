@@ -30,6 +30,11 @@ export function stationTitle(name) {
     .trim();
 }
 
+// В каталоге встречается опечатка «Require» — считаем её «Required».
+export function normalizeLicense(license) {
+  return license === 'Require' ? 'Required' : license || null;
+}
+
 export function productPicture(productId) {
   return productId ? `${CARD_PICTURES}/${productId}.jpg` : null;
 }
@@ -121,4 +126,33 @@ export function sanitizeDescription(html) {
   out += escapeHtml(decodeText(src.slice(last)));
   out += '</a>'.repeat(openLinks);
   return out.replace(/(<br>\s*){3,}/g, '<br><br>').replace(/<p>\s*(<br>\s*)*<\/p>/g, '').trim();
+}
+
+// Каталог игр мерчанта: игры с хотя бы одной его станции (как drova.io/games, но только наши).
+// popularIds — порядок из /accounting/statistics/most_popular_games; остальные — по алфавиту.
+export function merchantGames(stations, catalog, popularIds = []) {
+  const rank = new Map(popularIds.map((id, i) => [id, i]));
+  const games = new Map();
+  (stations || []).forEach((s) => {
+    s.productList.forEach((productId) => {
+      const product = catalog && catalog[productId];
+      if (!product) return;
+      let game = games.get(productId);
+      if (!game) {
+        game = { productId, ...product, stationIds: [], freeCount: 0 };
+        games.set(productId, game);
+      }
+      game.stationIds.push(s.uuid);
+      if (s.state === STATE_FREE) game.freeCount += 1;
+    });
+  });
+  const byRank = (g) => (rank.has(g.productId) ? rank.get(g.productId) : Infinity);
+  return [...games.values()].sort((a, b) => byRank(a) - byRank(b) || a.title.localeCompare(b.title));
+}
+
+// Станция для «Запустить игру (автоподбор)»: свободная, с этой игрой, с наименьшим номером.
+export function pickFreeStation(stations, productId) {
+  return (stations || [])
+    .filter((s) => s.state === STATE_FREE && s.productList.includes(productId))
+    .sort(compareStations)[0] || null;
 }

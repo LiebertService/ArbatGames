@@ -1,7 +1,8 @@
 <template>
   <div class="station-page">
-    <router-link class="station-page__back" :to="{ name: 'merchant-stations', params: { merchantId } }">
-      <Icon type="ios-arrow-back" /> {{ $t('merchantStations.backToList') }}
+    <!-- Пришли из «Игр» (?game=) — назад к играм, иначе к станциям -->
+    <router-link class="station-page__back" :to="{ name: focusProductId ? 'merchant-games' : 'merchant-stations', params: { merchantId } }">
+      <Icon type="ios-arrow-back" /> {{ $t(focusProductId ? 'merchantStations.backToGames' : 'merchantStations.backToList') }}
     </router-link>
 
     <Spin v-if="!station && loading" size="large" class="station-page__spin" />
@@ -64,7 +65,11 @@
 
       <Spin v-if="!catalog" size="large" class="station-page__spin">{{ $t('merchantStations.loadingCatalog') }}</Spin>
       <template v-else>
-        <p class="station-page__count">{{ $t('merchantStations.gamesShown', { shown: games.length, total: stationGames.length }) }}</p>
+        <p v-if="focusGame" class="station-page__focus">
+          {{ $t('merchantStations.focusGame', { game: focusGame.title }) }}
+          <router-link :to="{ query: { ...$route.query, game: undefined } }" replace>{{ $t('merchantStations.showAllGames') }}</router-link>
+        </p>
+        <p v-else class="station-page__count">{{ $t('merchantStations.gamesShown', { shown: games.length, total: stationGames.length }) }}</p>
         <div class="station-page__games">
           <GameCard
             v-for="game in games"
@@ -84,12 +89,10 @@ import { mapState } from 'vuex';
 import GameCard from '@/components/GameCard.vue';
 import { DROVA_SITE, REFRESH_INTERVAL } from '@/config';
 import { launchGame, hasNativeLauncher } from '@/launcher';
-import { sanitizeDescription } from '@/utils/station';
+import { sanitizeDescription, normalizeLicense as normLicense } from '@/utils/station';
 
 const NS = 'merchantStations';
 const STATE_COLORS = { free: 'success', busy: 'warning', other: 'default' };
-// В каталоге встречается опечатка «Require» — считаем её «Required».
-const normLicense = (l) => (l === 'Require' ? 'Required' : l);
 
 export default {
   name: 'StationPage',
@@ -122,7 +125,11 @@ export default {
     },
     licenses() { return [...new Set(this.stationGames.map((g) => normLicense(g.licenseType)).filter(Boolean))].sort(); },
     accounts() { return [...new Set(this.stationGames.map((g) => g.requiredAccount).filter(Boolean))].sort(); },
+    // ?game=<productId> — пришли из каталога «Игры»: показываем только эту игру.
+    focusProductId() { return this.$route.query.game || null; },
+    focusGame() { return this.stationGames.find((g) => g.productId === this.focusProductId) || null; },
     games() {
+      if (this.focusGame) return [this.focusGame];
       const q = this.query.trim().toLowerCase();
       return this.stationGames.filter((g) => (!q || g.title.toLowerCase().includes(q))
         && (!this.license || normLicense(g.licenseType) === this.license)
@@ -197,6 +204,9 @@ export default {
 .station-page__filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
 .station-page__filter { flex: 1 1 220px; }
 .station-page__count { font-size: 13px; margin: 0 0 8px; }
+.station-page__focus { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.station-page__focus a { margin-left: 8px; font-weight: 400; }
+.station-page__games >>> .game-card:only-child { max-width: 420px; }
 .station-page__games {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -218,6 +228,8 @@ export default {
 .theme_foxexeDark .station-page__hw dt { color: #ccc; }
 .theme_foxexeDark .station-page__hw dd { color: #fff; }
 .theme_foxexeDark .station-page__filters { padding: 10px; background: #333; border-radius: 5px; }
+.theme_foxexeDark .station-page__focus { color: #fff; }
+.theme_foxexeDark .station-page__focus a { color: #007bff; }
 .theme_foxexeDark .station-page__count,
 .theme_foxexeDark .station-page__empty { color: #ccc; }
 .theme_foxexeDark .station-page__games { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }

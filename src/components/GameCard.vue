@@ -1,16 +1,31 @@
 <template>
   <!-- Разметка и классы повторяют .gameList__item-thumb со страницы станции drova.io -->
-  <div class="game-card" :class="{ 'game-card_disabled': disabled }" :title="game.title">
-    <div class="game-card__image" :style="{ backgroundImage: `url(&quot;${game.cardPicture}&quot;)` }" />
+  <!-- selectable: каталог «Игры» — клик открывает выбор станции; иначе — запуск на текущей станции -->
+  <div
+    class="game-card"
+    :class="{ 'game-card_disabled': disabled, 'game-card_selectable': selectable }"
+    :title="game.title"
+    :role="selectable ? 'button' : null"
+    :tabindex="selectable ? 0 : null"
+    @click="selectable && $emit('select')"
+    @keydown.enter="selectable && $emit('select')"
+  >
+    <!-- img + loading=lazy: в каталоге сотни карточек, обложки грузятся по мере прокрутки -->
+    <img class="game-card__image" :src="game.cardPicture" alt="" loading="lazy" decoding="async">
     <div class="game-card__title">
       <Icon v-if="game.useDefaultDesktop" type="ios-desktop" :title="$t('merchantStations.game.desktop')" />
       <span>{{ game.title }}</span>
     </div>
-    <div v-if="game.requiredAccount" class="game-card__badges">{{ game.requiredAccount }}</div>
+    <div v-if="game.requiredAccount || meta" class="game-card__badges">
+      <div v-if="game.requiredAccount">{{ game.requiredAccount }}</div>
+      <div v-if="meta" class="game-card__meta">{{ meta }}</div>
+    </div>
+
+    <div v-if="selectable" class="game-card__play-label">{{ $t('merchantStations.play') }}</div>
 
     <!-- Клик по карточке / Play в центре — приложение Drova; иконка слева внизу — веб-клиент -->
     <div
-      v-if="!disabled"
+      v-else-if="!disabled"
       class="game-card__start"
       role="button"
       tabindex="0"
@@ -42,6 +57,8 @@ export default {
   props: {
     game: { type: Object, required: true },
     disabled: { type: Boolean, default: false },
+    selectable: { type: Boolean, default: false },
+    meta: { type: String, default: '' }, // строка под бейджем аккаунта: «на 5 станциях · свободно 2»
   },
 };
 </script>
@@ -57,9 +74,10 @@ export default {
 }
 .game-card_disabled { cursor: default; }
 .game-card__image {
+  display: block;
   width: 100%;
-  padding-top: 66.667%;
-  background: center / cover no-repeat;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
 }
 .game-card__title {
   position: absolute;
@@ -109,6 +127,26 @@ export default {
 .game-card__ico_app,
 .game-card__ico_browser { filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5)); }
 
+.game-card_selectable:focus-visible { outline: 2px solid #2d8cf0; outline-offset: 2px; }
+.game-card__meta { font-size: 12px; font-weight: 400; }
+/* «ИГРАТЬ» при наведении, как .catalog .gameList__item-start на drova.io/games */
+.game-card__play-label {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 2px 24px;
+  font-size: 28px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #fff;
+  background: #0c6;
+  border-top-left-radius: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.game-card_selectable:hover .game-card__play-label,
+.game-card_selectable:focus-visible .game-card__play-label { opacity: 1; }
+
 /* ===== theme_foxexeDark: .theme_foxexeDark .gameList__item-* ===== */
 .theme_foxexeDark .game-card {
   color: #eee;
@@ -117,7 +155,7 @@ export default {
   box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.1);
 }
 .theme_foxexeDark .game-card__image {
-  padding-top: 0;
+  aspect-ratio: auto;
   height: 190px;
   box-shadow: inset 0 0 10px 2px #000;
 }
@@ -128,6 +166,12 @@ export default {
   border-radius: 0;
 }
 .theme_foxexeDark .game-card__badges { right: auto; left: 0; border-radius: 0 5px 0 0; }
+.theme_foxexeDark .game-card__play-label {
+  border-radius: 0;
+  background: rgba(0, 210, 75, 0.85);
+  text-shadow: 1px 1px 2px #000;
+}
+.theme_foxexeDark .game-card_selectable:hover { box-shadow: inset 0 0 0 3px rgba(0, 210, 75, 0.85); }
 .theme_foxexeDark .game-card__start {
   background: rgba(0, 210, 75, 0.85);
   box-shadow: inset 0 0 10px 10px rgba(0, 255, 0, 0.5);
