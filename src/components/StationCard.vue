@@ -1,6 +1,17 @@
 <template>
-  <Card class="station-card" :class="`station-card_${station.state}`" :padding="0" dis-hover>
-    <div class="station-card__image" :style="imageStyle">
+  <Card
+    class="station-card"
+    :class="[`station-card_${station.state}`, { 'station-card_playable': playable }]"
+    :padding="0"
+    dis-hover
+    :tabindex="playable ? 0 : null"
+    :role="playable ? 'link' : null"
+    @click.native="onCardClick"
+    @keydown.native.enter="onCardClick"
+  >
+    <!-- Как на drova.io: скриншот игры только у занятой станции, у свободной — плашка с иконкой -->
+    <div class="station-card__image" :class="{ 'station-card__image_empty': !imageStyle }" :style="imageStyle">
+      <Icon v-if="!imageStyle" type="md-game-controller-b" class="station-card__placeholder" />
       <Tag class="station-card__state" :color="stateColor">{{ $t(`merchantStations.state.${station.state}`) }}</Tag>
       <span v-if="station.number != null" class="station-card__number">#{{ station.number }}</span>
     </div>
@@ -25,7 +36,7 @@
       </div>
 
       <div class="station-card__actions">
-        <Button type="primary" class="station-card__play" :to="playUrl" target="_blank" :disabled="station.state !== 'free'">
+        <Button type="primary" class="station-card__play" :to="playUrl" target="_blank" :disabled="!playable">
           {{ $t('merchantStations.play') }}
         </Button>
         <Button class="station-card__more" @click="$emit('details', station)">{{ $t('merchantStations.details') }}</Button>
@@ -50,9 +61,18 @@ export default {
   computed: {
     stateColor() { return STATE_COLORS[this.station.state]; },
     playUrl() { return `${DROVA_SITE}/stations/${this.station.uuid}`; },
+    playable() { return this.station.state === 'free'; },
     imageStyle() {
+      if (this.station.state !== 'busy') return null;
       const url = (this.product && this.product.cardPicture) || productPicture(this.station.productId);
       return url ? { backgroundImage: `url("${url}")` } : null;
+    },
+  },
+  methods: {
+    // Клик по карточке = «Играть». Кнопки обрабатывают клик сами (у «Играть» — ссылка, иначе откроется дважды).
+    onCardClick(e) {
+      if (!this.playable || e.target.closest('.station-card__actions')) return;
+      window.open(this.playUrl, '_blank', 'noopener');
     },
   },
 };
@@ -72,6 +92,17 @@ export default {
   background: #464c5b center / cover no-repeat;
 }
 .station-card_busy .station-card__image { filter: saturate(0.6); }
+.station-card_playable { cursor: pointer; }
+.station-card_playable:hover { box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15); }
+.station-card_playable:focus-visible { outline: 2px solid #2d8cf0; outline-offset: 2px; }
+.station-card__image_empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f3f3;
+}
+.station-card__placeholder { font-size: 64px; color: #19be6b; }
+.station-card_other .station-card__placeholder { color: #c3cbd6; }
 .station-card__state { position: absolute; top: 10px; left: 10px; margin: 0; }
 .station-card__number {
   position: absolute;
@@ -116,7 +147,11 @@ export default {
 }
 .theme_foxexeDark .station-card_busy { --state: #f90; }
 .theme_foxexeDark .station-card_other { --state: #c3cbd6; }
-.theme_foxexeDark .station-card:hover { background-color: #222d38; }
+/* iView: .ivu-card.ivu-card-dis-hover.ivu-card-bordered:hover красит рамку в #e8eaec */
+.theme_foxexeDark .station-card.ivu-card:hover { border-color: var(--state); }
+.theme_foxexeDark .station-card_playable:hover { background-color: #222d38; box-shadow: none; }
+.theme_foxexeDark .station-card__image_empty { background: transparent; }
+.theme_foxexeDark .station-card__placeholder { color: var(--state); }
 .theme_foxexeDark .station-card__state,
 .theme_foxexeDark .station-card__trial {
   background: var(--state) !important;
