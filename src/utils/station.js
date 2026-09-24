@@ -82,9 +82,13 @@ export function merchantStations(servers, merchantId) {
 
 const ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ESCAPES[c]);
-const decodeText = (s) => s.replace(/&nbsp;/g, ' ').replace(/&(amp|lt|gt|quot|#39);/g, (m) => ({
-  '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'",
-}[m]));
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const fromCodePoint = (code, raw) => (code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : raw);
+// Декодируем именованные и числовые (&#x1f9ff; → 🧿) сущности; дальше текст снова экранируется.
+const decodeText = (s) => s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (raw, ent) => {
+  if (ent[0] === '#') return fromCodePoint(ent[1].toLowerCase() === 'x' ? parseInt(ent.slice(2), 16) : Number(ent.slice(1)), raw);
+  return NAMED[ent.toLowerCase()] ?? raw;
+});
 
 // Описание станции приходит HTML-ом от мерчанта. Оставляем только p/br/b/strong/i/em/a[href=http(s)],
 // весь прочий текст экранируем — безопасно для v-html и для SSR (без DOM).

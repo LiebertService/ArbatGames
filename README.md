@@ -20,7 +20,9 @@
 - статус «Свободна / Занята»; у занятой — скриншот текущей игры, у свободной (как на drova.io) — плашка с иконкой;
 - железо: видеокарта, процессор, ОЗУ;
 - фильтры по статусу, видеокарте и **игре** («на каких станциях есть Cyberpunk»);
-- окно станции: описание мерчанта (HTML очищается, остаются только абзацы, жирный текст и http(s)-ссылки) и полная библиотека игр с поиском;
+- страница станции `/merchants/<id>/stations/<stationId>` («Игры и описание»): описание мерчанта (HTML очищается,
+  остаются только абзацы, жирный текст и http(s)-ссылки), железо и **каталог игр как на drova.io** с фильтрами
+  «Игра / Лицензия / Учётная запись»; Play в центре карточки — запуск через приложение Drova, иконка слева внизу — в веб-клиенте;
 - кнопка «Играть» и клик по карточке свободной станции открывают `https://drova.io/stations/{uuid}`;
 - автообновление статусов раз в минуту, только пока вкладка видна;
 - темы drova.io: `foxexeDark` (тёмная, по умолчанию) и `dvLight` (светлая), см. ниже.
@@ -55,6 +57,15 @@ npm test        # юнит-тесты src/utils (node --test)
 
 Другой мерчант: `/merchants/<user_id>`. Название и ссылки витрины задаются в `src/config.js` → `MERCHANTS`.
 
+## Запуск игр
+
+drova.io запускает игру от имени вошедшего игрока: `POST /session-manager/sessions` с `X-Auth-Token`, затем будит
+приложение Drova (`start-….tl.drova.io:40109` / протокол `drova:`) или открывает веб-клиент `/inbrowser/?sessionId&serverId&token`.
+Токен есть только на drova.io, поэтому страница вызывает запуск через `src/launcher.js`:
+
+- **внутри drova.io** регистрируется их `Player` — игра запускается прямо с нашей страницы (см. п. 6 ниже);
+- **на отдельном сайте** (GitHub Pages, VPS) клик по игре открывает станцию на drova.io и показывает подсказку.
+
 ## Встраивание в drova.io
 
 1. Скопировать `src/api/drova.js`, `src/utils/`, `src/store/merchantStations.js`, `src/components/` (кроме `ThemeSwitcher.vue`), `src/views/MerchantStations.vue` (убрать из шаблона `<ThemeSwitcher />`).
@@ -63,6 +74,19 @@ npm test        # юнит-тесты src/utils (node --test)
 4. Слить `src/i18n/ru.js` и `en.js` в сообщения vue-i18n (ключ `merchantStations`).
 5. SSR: страница грузит данные в `serverPrefetch`, клиент берёт их из `__INITIAL_STATE__` и повторно не запрашивает.
    View UI у drova.io подключён глобально, поэтому в `src/app.js` он нужен только для автономного запуска.
+6. Запуск игр: в layout, где есть `<Player ref="player" />` (как на странице станции drova.io), зарегистрировать launcher:
+
+   ```js
+   import { setLauncher } from '@/launcher';
+
+   mounted() {
+     // Те же аргументы, что у tryToStart на странице станции drova.io; последний — запуск в браузере.
+     setLauncher(({ stationId, productId, inBrowser }) => this.$refs.player.tryToStart(
+       this.xauthtoken, this.user.drovauser_id, productId, stationId,
+       this.trialMode, this.usergeo, undefined, undefined, undefined, inBrowser,
+     ));
+   },
+   ```
 
 ## Публикация на GitHub Pages
 

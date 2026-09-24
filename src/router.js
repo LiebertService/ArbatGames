@@ -12,6 +12,12 @@ export const merchantRoutes = [
     component: () => import(/* webpackChunkName: "merchant-stations" */ '@/views/MerchantStations.vue'),
     props: true,
   },
+  {
+    path: '/merchants/:merchantId/stations/:stationId',
+    name: 'merchant-station',
+    component: () => import(/* webpackChunkName: "merchant-stations" */ '@/views/StationPage.vue'),
+    props: true,
+  },
 ];
 
 export function createRouter() {

@@ -93,7 +93,14 @@ export default {
         const list = await api.fetchCatalog();
         const map = {};
         list.forEach((p) => {
-          map[p.productId] = { title: p.displayName || p.title, cardPicture: p.cardPicture, ageGroup: p.ageGroup, requiredAccount: p.requiredAccount };
+          map[p.productId] = {
+            title: p.displayName || p.title,
+            cardPicture: p.cardPicture,
+            ageGroup: p.ageGroup,
+            requiredAccount: p.requiredAccount || null,
+            licenseType: p.licenseType || null,
+            useDefaultDesktop: !!p.useDefaultDesktop,
+          };
         });
         commit('setCatalog', Object.freeze(map));
       } finally {

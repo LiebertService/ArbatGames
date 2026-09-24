@@ -59,3 +59,9 @@ test('sanitizeDescription экранирует незакрытый тег и з
   assert.equal(sanitizeDescription('a <img src=x onerror=alert(1)'), 'a &lt;img src=x onerror=alert(1)');
   assert.equal(sanitizeDescription('<a href="https://x.y">x'), '<a href="https://x.y" target="_blank" rel="nofollow noopener noreferrer">x</a>');
 });
+
+test('sanitizeDescription декодирует числовые сущности, но не пропускает теги через них', () => {
+  assert.equal(sanitizeDescription('&#x1f9ff; Акция &#128293;'), '🧿 Акция 🔥');
+  assert.equal(sanitizeDescription('&#60;script&#62;x'), '&lt;script&gt;x');
+  assert.equal(sanitizeDescription('&unknown; &#0;'), '&amp;unknown; &amp;#0;');
+});

@@ -39,7 +39,7 @@
         <Button type="primary" class="station-card__play" :to="playUrl" target="_blank" :disabled="!playable">
           {{ $t('merchantStations.play') }}
         </Button>
-        <Button class="station-card__more" @click="$emit('details', station)">{{ $t('merchantStations.details') }}</Button>
+        <Button class="station-card__more" :to="detailsRoute">{{ $t('merchantStations.details') }}</Button>
       </div>
     </div>
   </Card>
@@ -62,6 +62,9 @@ export default {
     stateColor() { return STATE_COLORS[this.station.state]; },
     playUrl() { return `${DROVA_SITE}/stations/${this.station.uuid}`; },
     playable() { return this.station.state === 'free'; },
+    detailsRoute() {
+      return { name: 'merchant-station', params: { merchantId: this.$route.params.merchantId, stationId: this.station.uuid } };
+    },
     imageStyle() {
       if (this.station.state !== 'busy') return null;
       const url = (this.product && this.product.cardPicture) || productPicture(this.station.productId);
@@ -71,7 +74,8 @@ export default {
   methods: {
     // Клик по карточке = «Играть». Кнопки обрабатывают клик сами (у «Играть» — ссылка, иначе откроется дважды).
     onCardClick(e) {
-      if (!this.playable || e.target.closest('.station-card__actions')) return;
+      // defaultPrevented / !isConnected: «Игры и описание» уже увёл роутер на страницу станции.
+      if (!this.playable || e.defaultPrevented || !this.$el.isConnected || e.target.closest('.station-card__actions')) return;
       window.open(this.playUrl, '_blank', 'noopener');
     },
   },

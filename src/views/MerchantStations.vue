@@ -50,24 +50,17 @@
             :station="station"
             :hardware="hardware[station.uuid]"
             :product="products[station.productId]"
-            @details="selected = $event"
           />
         </Col>
       </Row>
     </div>
 
-    <StationDetailsModal
-      :station="selected"
-      :hardware="selected ? hardware[selected.uuid] : null"
-      @close="selected = null"
-    />
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from 'vuex';
 import StationCard from '@/components/StationCard.vue';
-import StationDetailsModal from '@/components/StationDetailsModal.vue';
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 import { MERCHANTS, REFRESH_INTERVAL } from '@/config';
 
@@ -75,7 +68,7 @@ const NS = 'merchantStations';
 
 export default {
   name: 'MerchantStations',
-  components: { StationCard, StationDetailsModal, ThemeSwitcher },
+  components: { StationCard, ThemeSwitcher },
   props: {
     merchantId: { type: String, required: true },
   },
@@ -83,7 +76,6 @@ export default {
     stateFilter: 'all',
     gpuFilter: '',
     gameQuery: '',
-    selected: null,
     timer: null,
   }),
   metaInfo() {
