@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+__MACOSX/
+.env
+.env.*
+# Файлы с рабочими токенами drova.io — не коммитить
+*.har
+qr_merchant_token.png
