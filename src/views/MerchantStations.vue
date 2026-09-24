@@ -3,10 +3,7 @@
     <header class="merchant-stations__header">
       <div>
         <h1 class="merchant-stations__title">{{ $t('merchantStations.title', { name: merchant.name }) }}</h1>
-        <p class="merchant-stations__summary">
-          {{ $t('merchantStations.summary', counts) }}
-          <span v-if="merchant.city"> · {{ merchant.city }}</span>
-        </p>
+        <p v-if="merchant.city" class="merchant-stations__summary">{{ merchant.city }}</p>
         <p v-if="merchant.links.length" class="merchant-stations__links">
           <a v-for="link in merchant.links" :key="link.url" :href="link.url" target="_blank" rel="noopener">{{ link.title }}</a>
         </p>
@@ -19,11 +16,19 @@
     </header>
 
     <div class="merchant-stations__filters">
-      <RadioGroup v-model="stateFilter" type="button">
-        <Radio label="all">{{ $t('merchantStations.filters.all') }} ({{ counts.total }})</Radio>
-        <Radio label="free">{{ $t('merchantStations.filters.free') }} ({{ counts.free }})</Radio>
-        <Radio label="busy">{{ $t('merchantStations.filters.busy') }} ({{ counts.busy }})</Radio>
-      </RadioGroup>
+      <!-- Статус — в адресе (?status=all|busy, без параметра — свободные): кнопки = обычные ссылки -->
+      <div class="ivu-btn-group ivu-btn-group-default merchant-stations__status">
+        <!-- router-link, а не <Button :to>: у кнопки View UI нет href, ссылку не скопировать -->
+        <router-link
+          v-for="status in statuses"
+          :key="status"
+          :to="statusRoute(status)"
+          :class="['ivu-btn', stateFilter === status ? 'ivu-btn-primary' : 'ivu-btn-default']"
+          replace
+        >
+          {{ $t(`merchantStations.filters.${status}`) }} ({{ counts[status === 'all' ? 'total' : status] }})
+        </router-link>
+      </div>
       <Select v-model="gpuFilter" class="merchant-stations__gpu" :placeholder="$t('merchantStations.filters.gpu')" clearable>
         <Option v-for="gpu in gpus" :key="gpu" :value="gpu">{{ gpu }}</Option>
       </Select>
@@ -41,6 +46,10 @@
 
     <Spin v-if="loading && !stations.length" size="large" class="merchant-stations__spin" />
     <p v-else-if="!stations.length && !error" class="merchant-stations__empty">{{ $t('merchantStations.noStations') }}</p>
+    <p v-else-if="!filtered.length && stateFilter === 'free' && !counts.free" class="merchant-stations__empty">
+      {{ $t('merchantStations.allBusy') }}
+      <router-link :to="statusRoute('all')">{{ $t('merchantStations.showAll') }}</router-link>
+    </p>
     <p v-else-if="!filtered.length" class="merchant-stations__empty">{{ $t('merchantStations.empty') }}</p>
 
     <div v-if="filtered.length" class="merchant-stations__content">
@@ -65,6 +74,8 @@ import ThemeSwitcher from '@/components/ThemeSwitcher.vue';
 import { MERCHANTS, REFRESH_INTERVAL } from '@/config';
 
 const NS = 'merchantStations';
+const STATUSES = ['free', 'all', 'busy'];
+const DEFAULT_STATUS = 'free';
 
 export default {
   name: 'MerchantStations',
@@ -73,7 +84,7 @@ export default {
     merchantId: { type: String, required: true },
   },
   data: () => ({
-    stateFilter: 'all',
+    statuses: STATUSES,
     gpuFilter: '',
     gameQuery: '',
     timer: null,
@@ -90,6 +101,10 @@ export default {
   computed: {
     ...mapState(NS, ['stations', 'hardware', 'products', 'catalog', 'loading', 'error', 'updatedAt']),
     ...mapGetters(NS, ['counts', 'gpus']),
+    stateFilter() {
+      const { status } = this.$route.query;
+      return STATUSES.includes(status) ? status : DEFAULT_STATUS;
+    },
     merchant() {
       return { name: 'мерчанта', city: null, links: [], ...MERCHANTS[this.merchantId] };
     },
@@ -138,6 +153,10 @@ export default {
     },
     onTick() {
       if (document.visibilityState === 'visible' && !this.loading) this.refresh();
+    },
+    statusRoute(status) {
+      const query = { ...this.$route.query, status: status === DEFAULT_STATUS ? undefined : status };
+      return { name: 'merchant-stations', params: { merchantId: this.merchantId }, query };
     },
     loadCatalog() {
       this.$store.dispatch(`${NS}/loadCatalog`);
